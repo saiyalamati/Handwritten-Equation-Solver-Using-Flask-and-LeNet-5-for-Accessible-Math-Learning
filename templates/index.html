@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Equation Solver</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #FFEB3B, #FFD54F);
+            overflow: hidden;
+            color: #333;
+            text-align: center;
+            padding: 20px;
+            position: relative;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 30px;
+            width: 400px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        h1 {
+            font-size: 26px;
+            margin-bottom: 15px;
+            color: #E65100;
+        }
+        label {
+            display: block;
+            background: #F57C00;
+            color: white;
+            padding: 12px;
+            margin: 10px 0;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: 0.3s;
+            font-weight: bold;
+        }
+        label:hover {
+            background: #E64A19;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .spinner {
+            display: none;
+            font-size: 18px;
+            color: #E65100;
+            margin-top: 15px;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 10px;
+            border-radius: 8px;
+            color: #333;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .btn {
+            background: #FF9800;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: bold;
+        }
+        .btn:hover {
+            background: #FB8C00;
+        }
+
+        /* Sparkle Animation */
+        .particle {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            opacity: 0.8;
+            animation: float 6s linear infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px) scale(1); opacity: 1; }
+            50% { transform: translateY(-120px) scale(1.2); opacity: 0.6; }
+            100% { transform: translateY(-250px) scale(1); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Sprinkle Effect -->
+<script>
+    function createParticle() {
+        const particle = document.createElement("div");
+        particle.classList.add("particle");
+        document.body.appendChild(particle);
+
+        let x = Math.random() * window.innerWidth;
+        let duration = Math.random() * 3 + 3;
+
+        particle.style.left = `${x}px`;  
+        particle.style.animationDuration = `${duration}s`;  
+
+        setTimeout(() => {
+            particle.remove();
+        }, duration * 1000);
+    }
+    setInterval(createParticle, 400);
+</script>
+
+<div class="container">
+    <h1>✨ Math Equation Solver using CNN ✨</h1>
+    <p>Upload an image of a handwritten Mathematical equation</p>
+
+    <label for="file-input">📷 Choose an Image</label>
+    <input type="file" id="file-input" accept="image/*">
+    <button class="btn" id="upload-btn">Solve Equation</button>
+
+    <div class="spinner" id="spinner">⏳ Processing...</div>
+
+    <div class="result">
+        <p id="expression"></p>
+        <p id="evaluation-result"></p>
+    </div>
+
+    <p id="error-message" class="error"></p>
+</div>
+
+<script>
+    let selectedFile = null;
+    
+    document.getElementById("file-input").addEventListener("change", function(event) {
+        selectedFile = event.target.files[0];
+    });
+
+    document.getElementById("upload-btn").addEventListener("click", function() {
+        if (!selectedFile) {
+            document.getElementById("error-message").textContent = "⚠️ Please select a file first.";
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+
+        const spinner = document.getElementById("spinner");
+        const errorMessage = document.getElementById("error-message");
+        const expressionElement = document.getElementById("expression");
+        const evaluationElement = document.getElementById("evaluation-result");
+
+        // Reset UI
+        spinner.style.display = "block";
+        errorMessage.textContent = "";
+        expressionElement.textContent = "";
+        evaluationElement.textContent = "";
+
+        fetch("/solve", {
+            method: "POST",
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) throw new Error("Server error");
+            return response.json();
+        })
+        .then(data => {
+            spinner.style.display = "none";
+            if (data.error) {
+                errorMessage.textContent = `⚠️ Error: ${data.error}`;
+            } else {
+                expressionElement.innerHTML = `🔢 <strong>Recognized Expression:</strong> ${data.expression}`;
+                evaluationElement.innerHTML = `✅ <strong>Evaluation Result:</strong> ${data.result}`;
+            }
+        })
+        .catch(error => {
+            spinner.style.display = "none";
+            errorMessage.textContent = `⚠️ Error: ${error.message}`;
+        });
+    });
+</script>
+
+</body>
+</html>
